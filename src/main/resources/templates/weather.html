@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Activity Forecast</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            min-height: 100vh;
+            color: #eee;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            text-align: center;
+            padding: 32px 20px 16px;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            color: #e0f0ff;
+            letter-spacing: 2px;
+        }
+
+        header p {
+            color: #7ec8e3;
+            font-size: 0.9rem;
+            margin-top: 6px;
+            letter-spacing: 1px;
+        }
+
+        .layout {
+            display: flex;
+            flex: 1;
+            gap: 24px;
+            padding: 24px;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 260px;
+            flex-shrink: 0;
+        }
+
+        .sidebar-section {
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(126,200,227,0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .sidebar-section h2 {
+            font-size: 0.75rem;
+            color: #7ec8e3;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+
+        .sidebar-section label {
+            display: block;
+            font-size: 0.75rem;
+            color: #aaa;
+            margin-bottom: 4px;
+            margin-top: 12px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .sidebar-section input {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid rgba(126,200,227,0.3);
+            background: rgba(255,255,255,0.06);
+            color: #fff;
+            font-size: 0.9rem;
+        }
+
+        .sidebar-section input::placeholder { color: #666; }
+
+        .btn-save {
+            width: 100%;
+            margin-top: 16px;
+            padding: 10px;
+            background: #7ec8e3;
+            color: #1a1a2e;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+
+        .btn-save:hover { background: #a8d8ea; }
+
+        .saved-activity {
+            background: rgba(126,200,227,0.1);
+            border: 1px solid rgba(126,200,227,0.3);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 0.85rem;
+        }
+
+        .saved-activity .activity-name {
+            font-size: 1rem;
+            font-weight: bold;
+            color: #e0f0ff;
+            margin-bottom: 8px;
+        }
+
+        .saved-activity .param {
+            color: #aaa;
+            font-size: 0.8rem;
+            margin-bottom: 4px;
+        }
+
+        .saved-activity .param span {
+            color: #7ec8e3;
+            font-weight: bold;
+        }
+
+        .no-activity {
+            color: #666;
+            font-size: 0.85rem;
+            font-style: italic;
+            text-align: center;
+            padding: 8px;
+        }
+
+        /* MAIN CONTENT */
+        .main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .city-form {
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(126,200,227,0.2);
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .city-form label {
+            font-size: 0.75rem;
+            color: #7ec8e3;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .city-form select {
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(126,200,227,0.3);
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+
+        .city-form select option {
+            background: #16213e;
+            color: #fff;
+        }
+
+        .btn-analyze {
+            padding: 10px 28px;
+            background: #7ec8e3;
+            color: #1a1a2e;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: background 0.2s;
+        }
+
+        .btn-analyze:hover { background: #a8d8ea; }
+
+        /* SUMMARY CARDS */
+        .summary-cards {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(126,200,227,0.2);
+            border-radius: 10px;
+            padding: 16px 20px;
+            text-align: center;
+            min-width: 110px;
+            flex: 1;
+        }
+
+        .card .label {
+            font-size: 0.7rem;
+            color: #7ec8e3;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .card .value {
+            font-size: 1.6rem;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .card .unit {
+            font-size: 0.75rem;
+            color: #aaa;
+        }
+
+        .verdict {
+            text-align: center;
+            font-size: 1rem;
+            color: #a8d8ea;
+            margin-bottom: 24px;
+            font-style: italic;
+        }
+
+        .city-title {
+            text-align: center;
+            font-size: 1.2rem;
+            margin-bottom: 6px;
+            color: #e0f0ff;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        /* TABLE */
+       .table-wrap {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(126,200,227,0.15);
+            border-radius: 12px;
+            overflow: hidden;
+            max-height: 480px;
+            overflow-y: auto;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE/Edge */
+        }
+
+        .table-wrap::-webkit-scrollbar {
+            display: none; /* Chrome/Safari */
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: rgba(20, 40, 80, 0.95);
+            color: #7ec8e3;
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        td {
+            padding: 11px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.88rem;
+            color: #ddd;
+        }
+
+        td:nth-child(2) {
+            font-weight: bold;
+            font-size: 1rem;
+            color: #e0f0ff;
+        }
+
+        tr:last-child td { border-bottom: none; }
+
+        tr.match-row td {
+            background: rgba(126,200,227,0.08);
+        }
+
+        tr:hover td { background: rgba(255,255,255,0.04); }
+
+        .icon-cell {
+            font-size: 1.2rem;
+            text-align: center;
+        }
+
+        .no-match { color: #444; }
+
+        .header-layout {
+            display: flex;
+            gap: 24px;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 0 24px;
+        }
+
+        .header-sidebar-spacer {
+            width: 260px;
+            flex-shrink: 0;
+        }
+
+        .header-main {
+            flex: 1;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-layout">
+        <div class="header-sidebar-spacer"></div>
+        <div class="header-main">
+            <h1>Activity Forecast</h1>
+            <p>Define your activity, pick a city, and find your best windows this week</p>
+        </div>
+    </div>
+</header>
+
+<div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+        <!-- Activity Form -->
+        <div class="sidebar-section">
+            <h2>Define Your Activity</h2>
+            <label>Activity Name</label>
+            <input type="text" id="activityName" placeholder="e.g. Golf, Sailing..." />
+            <label>Min Temp (°F)</label>
+            <input type="number" id="minTemp" placeholder="e.g. 55" />
+            <label>Max Temp (°F)</label>
+            <input type="number" id="maxTemp" placeholder="e.g. 85" />
+            <label>Max Wind (mph)</label>
+            <input type="number" id="maxWind" placeholder="e.g. 15" />
+            <label>Max Humidity (%)</label>
+            <input type="number" id="maxHumidity" placeholder="e.g. 80" />
+            <button class="btn-save" onclick="saveActivity()">Save Activity</button>
+        </div>
+
+        <!-- Saved Activity Display -->
+        <div class="sidebar-section">
+            <h2>Saved Activity</h2>
+            <div id="savedActivityDisplay">
+                <p class="no-activity">No activity saved yet.</p>
+            </div>
+        </div>
+
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main">
+
+        <!-- City Form -->
+        <form class="city-form" action="/weather/forecast" method="get" id="forecastForm">
+            <label>Select City</label>
+            <select name="city" id="citySelect">
+                <option value="Minneapolis">Minneapolis, MN</option>
+                <option value="Milwaukee">Milwaukee, WI</option>
+                <option value="Madison">Madison, WI</option>
+                <option value="Des Moines">Des Moines, IA</option>
+                <option value="Chicago">Chicago, IL</option>
+            </select>
+            <input type="hidden" name="minTemp" id="formMinTemp" value="0" />
+            <input type="hidden" name="maxTemp" id="formMaxTemp" value="150" />
+            <input type="hidden" name="maxWind" id="formMaxWind" value="100" />
+            <input type="hidden" name="maxHumidity" id="formMaxHumidity" value="100" />
+            <input type="hidden" name="activitySet" id="formActivitySet" value="false" />
+            <button type="submit" class="btn-analyze">Load City</button>
+        </form>
+
+        <!-- Results -->
+        <div th:if="${summary}">
+            <p class="city-title" th:text="${summary.city}"></p>
+            <p class="verdict" th:text="${summary.verdict}"></p>
+
+            <div class="summary-cards">
+                <div class="card">
+                    <div class="label">High</div>
+                    <div class="value" th:text="${summary.highTemp}"></div>
+                    <div class="unit">°F</div>
+                </div>
+                <div class="card">
+                    <div class="label">Low</div>
+                    <div class="value" th:text="${summary.lowTemp}"></div>
+                    <div class="unit">°F</div>
+                </div>
+                <div class="card">
+                    <div class="label">Avg Temp</div>
+                    <div class="value" th:text="${summary.avgTemp}"></div>
+                    <div class="unit">°F</div>
+                </div>
+                <div class="card">
+                    <div class="label">Avg Wind</div>
+                    <div class="value" th:text="${summary.avgWind}"></div>
+                    <div class="unit">mph</div>
+                </div>
+                <div class="card">
+                    <div class="label">Good Windows</div>
+                    <div class="value" th:text="${summary.matchingDays}"></div>
+                    <div class="unit">periods</div>
+                </div>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Activity</th>
+                        <th>Date / Time</th>
+                        <th>Temp °F</th>
+                        <th>Feels Like</th>
+                        <th>Humidity</th>
+                        <th>Wind mph</th>
+                        <th>Conditions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="day : ${summary.days}"
+                        th:classappend="${day.matches} ? 'match-row' : ''">
+                        <td class="icon-cell">
+                            <span th:if="${day.matches}" id="rowIcon">⛳</span>
+                            <span th:unless="${day.matches}" class="no-match">—</span>
+                        </td>
+                        <td th:text="${day.dateTime}"></td>
+                        <td th:text="${day.temperature}"></td>
+                        <td th:text="${day.feelsLike}"></td>
+                        <td th:text="${day.humidity + '%'}"></td>
+                        <td th:text="${day.windSpeed}"></td>
+                        <td th:text="${day.description}"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script>
+    const ACTIVITY_KEY = 'weatherActivity';
+
+ const ICONS = {
+    golf: '⛳',
+    cycling: '🚴',
+    bicycle: '🚴',
+    bike: '🚴',
+    sailing: '⛵',
+    sail: '⛵',
+    yard: '🌿',
+    garden: '🌿',
+    stargaz: '🌟',
+    star: '🌟',
+    motorcycle: '🏍️',
+    moto: '🏍️',
+    riding: '🏍️',
+};
+
+    function getIcon(name) {
+        if (!name) return '✅';
+        const lower = name.toLowerCase();
+        for (const [key, icon] of Object.entries(ICONS)) {
+            if (lower.includes(key)) return icon;
+        }
+        return '✅';
+    }
+
+    function saveActivity() {
+        const activity = {
+            name: document.getElementById('activityName').value,
+            minTemp: document.getElementById('minTemp').value || 0,
+            maxTemp: document.getElementById('maxTemp').value || 150,
+            maxWind: document.getElementById('maxWind').value || 100,
+            maxHumidity: document.getElementById('maxHumidity').value || 100,
+        };
+        if (!activity.name) {
+            alert('Please enter an activity name.');
+            return;
+        }
+        localStorage.setItem(ACTIVITY_KEY, JSON.stringify(activity));
+        renderSavedActivity(activity);
+        updateFormParams(activity);
+
+        document.getElementById('formActivitySet').value = 'true';
+    }
+
+    function renderSavedActivity(activity) {
+        const display = document.getElementById('savedActivityDisplay');
+        const icon = getIcon(activity.name);
+        display.innerHTML = `
+            <div class="saved-activity">
+                <div class="activity-name">${icon} ${activity.name}</div>
+                <div class="param">Min Temp: <span>${activity.minTemp}°F</span></div>
+                <div class="param">Max Temp: <span>${activity.maxTemp}°F</span></div>
+                <div class="param">Max Wind: <span>${activity.maxWind} mph</span></div>
+                <div class="param">Max Humidity: <span>${activity.maxHumidity}%</span></div>
+            </div>
+        `;
+    }
+
+    function updateFormParams(activity) {
+        document.getElementById('formMinTemp').value = activity.minTemp;
+        document.getElementById('formMaxTemp').value = activity.maxTemp;
+        document.getElementById('formMaxWind').value = activity.maxWind;
+        document.getElementById('formMaxHumidity').value = activity.maxHumidity;
+    }
+
+    function updateIcons(activityName) {
+        const icon = getIcon(activityName);
+        document.querySelectorAll('#rowIcon').forEach(el => {
+            el.textContent = icon;
+        });
+    }
+
+    // On page load — restore saved activity
+    window.addEventListener('load', () => {
+        const saved = localStorage.getItem(ACTIVITY_KEY);
+        if (saved) {
+            const activity = JSON.parse(saved);
+            document.getElementById('activityName').value = activity.name;
+            document.getElementById('minTemp').value = activity.minTemp;
+            document.getElementById('maxTemp').value = activity.maxTemp;
+            document.getElementById('maxWind').value = activity.maxWind;
+            document.getElementById('maxHumidity').value = activity.maxHumidity;
+            renderSavedActivity(activity);
+            updateFormParams(activity);
+            document.getElementById('formActivitySet').value = 'true';
+            updateIcons(activity.name);
+        }
+
+        // Restore selected city if returning from forecast
+        const selectedCity = "[[${selectedCity}]]";
+        if (selectedCity && selectedCity !== "") {
+            const select = document.getElementById('citySelect');
+            for (let option of select.options) {
+                if (option.value === selectedCity) {
+                    option.selected = true;
+                    break;
+                }
+            }
+        }
+    });
+</script>
+
+</body>
+</html>

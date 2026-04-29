@@ -375,10 +375,10 @@
             <input type="number" id="maxHumidity" placeholder="e.g. 80" />
             <label>Max Precipitation</label>
             <select id="maxPrecip">
-                <option value="0">☀️ None — clear skies only</option>
-                <option value="1" selected>🌂 Light drizzle OK</option>
-                <option value="2">🌧️ Light rain OK</option>
-                <option value="5">⛈️ Moderate rain OK</option>
+                <option value="0">☀️ Clear skies only</option>
+                <option value="1" selected>💧 Very light precip OK</option>
+                <option value="2">🌧️ Light precip OK</option>
+                <option value="5">⛈️ Moderate precip OK</option>
                 <option value="100">🌊 Any conditions</option>
             </select>
             <button class="btn-save" onclick="saveActivity()">Save Activity</button>
@@ -406,6 +406,12 @@
                 <option value="Madison">Madison, WI</option>
                 <option value="Des Moines">Des Moines, IA</option>
                 <option value="Chicago">Chicago, IL</option>
+                <option value="Seattle">Seattle, WA</option>
+                <option value="Denver">Denver, CO</option>
+                <option value="St. Louis">St. Louis, MO</option>
+                <option value="Pittsburgh">Pittsburgh, PA</option>
+                <option value="Cleveland">Cleveland, OH</option>
+                <option value="Buffalo">Buffalo, NY</option>
             </select>
             <input type="hidden" name="minTemp" id="formMinTemp" value="0" />
             <input type="hidden" name="maxTemp" id="formMaxTemp" value="150" />
@@ -544,9 +550,9 @@
     const icon = getIcon(activity.name);
     const precipLabels = {
         '0': '☀️ Clear skies only',
-        '1': '🌂 Light drizzle OK',
-        '2': '🌧️ Light rain OK',
-        '5': '⛈️ Moderate rain OK',
+        '1': '💧 Very light precip OK',
+        '2': '🌧️ Light precip OK',
+        '5': '⛈️ Moderate precip OK',
         '100': '🌊 Any conditions'
     };
     display.innerHTML = `

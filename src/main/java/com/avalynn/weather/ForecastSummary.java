@@ -10,6 +10,7 @@ public class ForecastSummary {
     private double lowTemp;
     private double avgTemp;
     private double avgWind;
+    private double avgPrecip;
     private int matchingDays;
     private String verdict;
     private List<ForecastDay> days;

@@ -15,7 +15,11 @@ public class WeatherController {
     }
 
     @GetMapping
-    public String showForm() {
+    public String showForm(Model model) {
+        ForecastSummary summary = weatherService.getForecast(
+                "Minneapolis", 0, 150, 100, 100, 100, false);
+        model.addAttribute("summary", summary);
+        model.addAttribute("selectedCity", "Minneapolis");
         return "weather";
     }
 
@@ -27,10 +31,11 @@ public class WeatherController {
             @RequestParam(defaultValue = "100") double maxWind,
             @RequestParam(defaultValue = "100") double maxHumidity,
             @RequestParam(defaultValue = "false") boolean activitySet,
+            @RequestParam(defaultValue = "100") double maxPrecip,
             Model model) {
 
         ForecastSummary summary = weatherService.getForecast(
-                city, minTemp, maxTemp, maxWind, maxHumidity, activitySet);
+                city, minTemp, maxTemp, maxWind, maxHumidity, maxPrecip, activitySet);
         model.addAttribute("summary", summary);
         model.addAttribute("selectedCity", city);
         return "weather";

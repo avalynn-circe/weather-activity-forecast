@@ -251,7 +251,7 @@
             border: 1px solid rgba(126,200,227,0.15);
             border-radius: 12px;
             overflow: hidden;
-            max-height: 480px;
+            max-height: 523px;
             overflow-y: auto;
             scrollbar-width: none; /* Firefox */
             -ms-overflow-style: none; /* IE/Edge */
@@ -325,6 +325,22 @@
             flex: 1;
             text-align: center;
         }
+
+        .sidebar-section select {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid rgba(126,200,227,0.3);
+            background: rgba(255,255,255,0.06);
+            color: #fff;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .sidebar-section select option {
+            background: #16213e;
+            color: #fff;
+        }
     </style>
 </head>
 <body>
@@ -357,6 +373,14 @@
             <input type="number" id="maxWind" placeholder="e.g. 15" />
             <label>Max Humidity (%)</label>
             <input type="number" id="maxHumidity" placeholder="e.g. 80" />
+            <label>Max Precipitation</label>
+            <select id="maxPrecip">
+                <option value="0">☀️ None — clear skies only</option>
+                <option value="1" selected>🌂 Light drizzle OK</option>
+                <option value="2">🌧️ Light rain OK</option>
+                <option value="5">⛈️ Moderate rain OK</option>
+                <option value="100">🌊 Any conditions</option>
+            </select>
             <button class="btn-save" onclick="saveActivity()">Save Activity</button>
         </div>
 
@@ -387,6 +411,7 @@
             <input type="hidden" name="maxTemp" id="formMaxTemp" value="150" />
             <input type="hidden" name="maxWind" id="formMaxWind" value="100" />
             <input type="hidden" name="maxHumidity" id="formMaxHumidity" value="100" />
+            <input type="hidden" name="maxPrecip" id="formMaxPrecip" value="100" />
             <input type="hidden" name="activitySet" id="formActivitySet" value="false" />
             <button type="submit" class="btn-analyze">Load City</button>
         </form>
@@ -418,6 +443,11 @@
                     <div class="unit">mph</div>
                 </div>
                 <div class="card">
+                    <div class="label">Avg Precip</div>
+                    <div class="value" th:text="${summary.avgPrecip}"></div>
+                    <div class="unit">mm</div>
+                </div>
+                <div class="card">
                     <div class="label">Good Windows</div>
                     <div class="value" th:text="${summary.matchingDays}"></div>
                     <div class="unit">periods</div>
@@ -434,6 +464,7 @@
                         <th>Feels Like</th>
                         <th>Humidity</th>
                         <th>Wind mph</th>
+                        <th>Precip mm</th>
                         <th>Conditions</th>
                     </tr>
                     </thead>
@@ -449,6 +480,7 @@
                         <td th:text="${day.feelsLike}"></td>
                         <td th:text="${day.humidity + '%'}"></td>
                         <td th:text="${day.windSpeed}"></td>
+                        <td th:text="${day.precipitation}"></td>
                         <td th:text="${day.description}"></td>
                     </tr>
                     </tbody>
@@ -494,6 +526,7 @@
             maxTemp: document.getElementById('maxTemp').value || 150,
             maxWind: document.getElementById('maxWind').value || 100,
             maxHumidity: document.getElementById('maxHumidity').value || 100,
+            maxPrecip: document.getElementById('maxPrecip').value || 100,
         };
         if (!activity.name) {
             alert('Please enter an activity name.');
@@ -507,24 +540,33 @@
     }
 
     function renderSavedActivity(activity) {
-        const display = document.getElementById('savedActivityDisplay');
-        const icon = getIcon(activity.name);
-        display.innerHTML = `
-            <div class="saved-activity">
-                <div class="activity-name">${icon} ${activity.name}</div>
-                <div class="param">Min Temp: <span>${activity.minTemp}°F</span></div>
-                <div class="param">Max Temp: <span>${activity.maxTemp}°F</span></div>
-                <div class="param">Max Wind: <span>${activity.maxWind} mph</span></div>
-                <div class="param">Max Humidity: <span>${activity.maxHumidity}%</span></div>
-            </div>
-        `;
-    }
+    const display = document.getElementById('savedActivityDisplay');
+    const icon = getIcon(activity.name);
+    const precipLabels = {
+        '0': '☀️ Clear skies only',
+        '1': '🌂 Light drizzle OK',
+        '2': '🌧️ Light rain OK',
+        '5': '⛈️ Moderate rain OK',
+        '100': '🌊 Any conditions'
+    };
+    display.innerHTML = `
+        <div class="saved-activity">
+            <div class="activity-name">${icon} ${activity.name}</div>
+            <div class="param">Min Temp: <span>${activity.minTemp}°F</span></div>
+            <div class="param">Max Temp: <span>${activity.maxTemp}°F</span></div>
+            <div class="param">Max Wind: <span>${activity.maxWind} mph</span></div>
+            <div class="param">Max Humidity: <span>${activity.maxHumidity}%</span></div>
+            <div class="param">Precipitation: <span>${precipLabels[activity.maxPrecip] || 'Any'}</span></div>
+        </div>
+    `;
+}
 
     function updateFormParams(activity) {
         document.getElementById('formMinTemp').value = activity.minTemp;
         document.getElementById('formMaxTemp').value = activity.maxTemp;
         document.getElementById('formMaxWind').value = activity.maxWind;
         document.getElementById('formMaxHumidity').value = activity.maxHumidity;
+        document.getElementById('formMaxPrecip').value = activity.maxPrecip;
     }
 
     function updateIcons(activityName) {
@@ -544,6 +586,7 @@
             document.getElementById('maxTemp').value = activity.maxTemp;
             document.getElementById('maxWind').value = activity.maxWind;
             document.getElementById('maxHumidity').value = activity.maxHumidity;
+            document.getElementById('maxPrecip').value = activity.maxPrecip;
             renderSavedActivity(activity);
             updateFormParams(activity);
             document.getElementById('formActivitySet').value = 'true';

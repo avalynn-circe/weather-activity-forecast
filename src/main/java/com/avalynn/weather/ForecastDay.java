@@ -12,4 +12,5 @@ public class ForecastDay {
     private String description;
     private String city;
     private Boolean matches;
+    private double precipitation;
 }

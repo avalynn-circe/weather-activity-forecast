@@ -22,6 +22,7 @@ public class WeatherService {
             double maxTemp,
             double maxWind,
             double maxHumidity,
+            double maxPrecip,
             boolean activitySet) {
 
         RestTemplate restTemplate = new RestTemplate();
@@ -39,6 +40,11 @@ public class WeatherService {
                 double temp = entry.get("main").get("temp").asDouble();
                 double wind = entry.get("wind").get("speed").asDouble();
                 int humidity = entry.get("main").get("humidity").asInt();
+                // precipitation is under "rain" -> "3h" and may not exist
+                JsonNode rain = entry.get("rain");
+                double precipitation = (rain != null && rain.get("3h") != null)
+                        ? rain.get("3h").asDouble()
+                        : 0.0;
 
                 ForecastDay day = new ForecastDay();
                 String raw = entry.get("dt_txt").asText();
@@ -52,13 +58,15 @@ public class WeatherService {
                 day.setWindSpeed(Math.round(wind * 10.0) / 10.0);
                 day.setDescription(entry.get("weather").get(0).get("description").asText());
                 day.setCity(city);
+                day.setPrecipitation(precipitation);
 
                 // Evaluate against activity parameters
                 boolean matches = activitySet && isDaytime
                         && temp >= minTemp
                         && temp <= maxTemp
                         && wind <= maxWind
-                        && humidity <= maxHumidity;
+                        && humidity <= maxHumidity
+                        && precipitation <= maxPrecip;
 
                 day.setMatches(matches);
                 results.add(day);
@@ -78,11 +86,16 @@ public class WeatherService {
             double low = results.stream().mapToDouble(ForecastDay::getTemperature).min().orElse(0);
             double avgTemp = results.stream().mapToDouble(ForecastDay::getTemperature).average().orElse(0);
             double avgWind = results.stream().mapToDouble(ForecastDay::getWindSpeed).average().orElse(0);
+            double avgPrecip = results.stream()
+                    .mapToDouble(ForecastDay::getPrecipitation)
+                    .average().orElse(0);
+
 
             summary.setHighTemp(Math.round(high * 10.0) / 10.0);
             summary.setLowTemp(Math.round(low * 10.0) / 10.0);
             summary.setAvgTemp(Math.round(avgTemp * 10.0) / 10.0);
             summary.setAvgWind(Math.round(avgWind * 10.0) / 10.0);
+            summary.setAvgPrecip(Math.round(avgPrecip * 10.0) / 10.0);
 
             long matchCount = results.stream().filter(d -> Boolean.TRUE.equals(d.getMatches())).count();
             long totalCount = results.size();
